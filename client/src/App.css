@@ -1,38 +1,191 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+:root {
+  --et-red: #e2231a;
+  --et-dark: #1a1a1a;
+  --et-gray: #f4f4f4;
+  --et-border: #e0e0e0;
+  --et-text: #222;
+  --et-muted: #666;
+  --et-white: #fff;
+  --ai-accent: #1a1a2e;
+  --ai-glow: #e2231a;
+  --ai-blue: #0f3460;
+  --ai-teal: #16213e;
+  --radius: 6px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--et-white);
+  color: var(--et-text);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+  line-height: 1.25;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+a { text-decoration: none; color: inherit; }
+
+button {
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
+  border: none;
+  outline: none;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+main { flex: 1; }
+
+.container { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+
+.et-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  gap: 6px;
+  background: var(--et-red);
   color: white;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
 }
 
-.App-link {
-  color: #61dafb;
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, var(--ai-accent), var(--ai-blue));
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.ai-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #4fffb0;
+  border-radius: 50%;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.section-divider {
+  border: none;
+  border-top: 3px solid var(--et-red);
+  margin: 0;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--et-red);
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--et-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: var(--et-red);
+  color: white;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+}
+
+.btn-primary:hover { background: #c01e16; }
+
+.btn-dark {
+  background: var(--et-dark);
+  color: white;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--et-red);
+  border: 1.5px solid var(--et-red);
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.btn-outline:hover { background: var(--et-red); color: white; }
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.page-header {
+  background: linear-gradient(135deg, var(--ai-accent) 0%, var(--ai-blue) 100%);
+  color: white;
+  padding: 48px 0 36px;
+  border-bottom: 3px solid var(--et-red);
+}
+
+.page-header h1 { font-size: 2rem; margin-bottom: 8px; }
+.page-header p { opacity: 0.75; font-size: 15px; }
+
+input, select, textarea {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px;
+  border: 1px solid var(--et-border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  background: white;
+  color: var(--et-text);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--et-red);
+  box-shadow: 0 0 0 3px rgba(226,35,26,0.08);
 }

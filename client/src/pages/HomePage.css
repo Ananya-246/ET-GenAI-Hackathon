@@ -1,0 +1,201 @@
+.home-page { background: #f7f7f7; }
+
+.ticker-bar {
+  background: #1a1a1a;
+  padding: 6px 0;
+  overflow: hidden;
+}
+
+.ticker-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticker-label {
+  background: var(--et-red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ticker-track {
+  display: flex;
+  gap: 32px;
+  overflow: hidden;
+  animation: ticker 30s linear infinite;
+}
+
+.ticker-item {
+  color: #ccc;
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ai-plugin-banner {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1a1a2e 100%);
+  padding: 28px 0;
+  border-bottom: 3px solid var(--et-red);
+}
+
+.plugin-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.plugin-banner-sub {
+  color: rgba(255,255,255,0.45);
+  font-size: 12px;
+}
+
+.plugin-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .plugin-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .plugin-cards-grid { grid-template-columns: 1fr; }
+}
+
+.plugin-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.plugin-card:hover {
+  border-color: var(--et-red);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(226,35,26,0.2);
+}
+
+.plugin-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+
+.plugin-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 3px;
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.plugin-card-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.45;
+}
+
+.plugin-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.plugin-card:hover .plugin-arrow { color: var(--et-red); }
+
+.home-grid-wrapper { padding: 24px 20px; }
+
+.home-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 960px) {
+  .home-main-grid { grid-template-columns: 1fr; }
+}
+
+.section-header { margin-bottom: 14px; }
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 6px;
+  color: var(--et-dark);
+}
+
+.compact-list { margin-top: 16px; }
+
+.market-widget {
+  background: white;
+  border: 1px solid var(--et-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.market-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--et-border);
+}
+
+.market-row:last-child { border-bottom: none; }
+
+.market-name { font-size: 13px; font-weight: 600; }
+.market-vals { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.market-val { font-size: 14px; font-weight: 700; }
+.market-change { font-size: 11px; font-weight: 600; }
+.market-change.up { color: #27ae60; }
+.market-change.down { color: var(--et-red); }
+
+.sidebar-ai-card {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-ai-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.home-bottom-grid { margin-top: 8px; }
+
+.bottom-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .bottom-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .bottom-cards-grid { grid-template-columns: 1fr; }
+}
