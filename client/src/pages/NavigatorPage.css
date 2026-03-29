@@ -46,6 +46,13 @@
 
 .topic-input-row { display: flex; gap: 10px; }
 
+.navigator-error {
+  margin-top: 10px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .briefing-layout {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -188,6 +195,10 @@
   border-radius: 8px;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.chat-bubble p {
+  white-space: pre-line;
 }
 
 .chat-bubble.user {

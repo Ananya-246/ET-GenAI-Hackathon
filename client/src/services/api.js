@@ -34,4 +34,17 @@ export const generateVideoScript = (articleText, style, voice) =>
 export const generateTTS = (scriptText, voice) =>
   api.post('/api/video/tts', { script_text: scriptText, voice });
 
+export const generateNavigatorBriefing = (topic, userId = 'guest', maxSources = 8) =>
+  api.post('/api/navigator/briefing', {
+    topic,
+    user_id: userId,
+    max_sources: maxSources,
+  });
+
+export const askNavigatorQuestion = (briefingId, question) =>
+  api.post('/api/navigator/ask', {
+    briefing_id: briefingId,
+    question,
+  });
+
 export default api;

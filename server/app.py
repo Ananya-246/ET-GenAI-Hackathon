@@ -2,6 +2,7 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 from routes.my_et import my_et_bp
 from routes.video import video_bp
+from routes.navigator import navigator_bp
 from database.models import init_db
 import os
 
@@ -11,6 +12,7 @@ CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000"]}})
 
 app.register_blueprint(my_et_bp, url_prefix="/api/my-et")
 app.register_blueprint(video_bp, url_prefix="/api/video")
+app.register_blueprint(navigator_bp, url_prefix="/api/navigator")
 
 
 @app.route("/static/audio/<path:filename>")
