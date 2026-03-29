@@ -47,4 +47,21 @@ export const askNavigatorQuestion = (briefingId, question) =>
     question,
   });
 
+export const getVernacularArticles = (limit = 12) =>
+  api.get(`/api/vernacular/articles?limit=${limit}`);
+
+export const translateVernacularText = (sourceText, languageCode, audienceHint = 'business readers') =>
+  api.post('/api/vernacular/translate', {
+    source_text: sourceText,
+    language_code: languageCode,
+    audience_hint: audienceHint,
+  });
+
+export const translateVernacularArticle = (articleId, languageCode, audienceHint = 'business readers') =>
+  api.post('/api/vernacular/translate-article', {
+    article_id: articleId,
+    language_code: languageCode,
+    audience_hint: audienceHint,
+  });
+
 export default api;

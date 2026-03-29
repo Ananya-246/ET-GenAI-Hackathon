@@ -8,6 +8,28 @@
   flex-wrap: wrap;
 }
 
+.mode-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.mode-btn {
+  border: 1px solid var(--et-border);
+  background: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Source Sans 3', sans-serif;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: var(--et-red);
+  color: white;
+  border-color: var(--et-red);
+}
+
 .lang-btn {
   display: flex;
   align-items: center;
@@ -30,8 +52,6 @@
   background: var(--et-red);
   color: white;
 }
-
-.lang-flag { font-size: 20px; }
 
 .lang-native {
   font-size: 15px;
@@ -105,6 +125,71 @@
 
 .sample-text-btn:hover { background: var(--et-red); color: white; border-color: var(--et-red); }
 
+.input-meta {
+  font-size: 12px;
+  color: var(--et-muted);
+  margin-bottom: 8px;
+}
+
+.article-select {
+  width: 100%;
+  border: 1px solid var(--et-border);
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.article-preview {
+  border: 1px solid #f2dada;
+  background: #fff7f7;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.preview-meta {
+  font-size: 11px;
+  color: var(--et-muted);
+  margin-bottom: 8px;
+}
+
+.article-preview p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--et-text);
+}
+
+.vern-input-label {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.vern-input {
+  width: 100%;
+  border: 1px solid var(--et-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.vern-error {
+  margin-top: 10px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .output-placeholder {
   min-height: 280px;
   display: flex;
@@ -120,6 +205,12 @@
 .output-placeholder span { font-size: 12px; color: #aaa; }
 
 .output-content { display: flex; flex-direction: column; gap: 16px; }
+
+.local-headline {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+}
 
 .translated-text {
   font-size: 15px;
@@ -146,6 +237,52 @@
   font-size: 12px;
   color: #166534;
   line-height: 1.5;
+}
+
+.local-context-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #166534;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.glossary-block {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fbff;
+}
+
+.glossary-title {
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.glossary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.glossary-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  background: white;
+}
+
+.glossary-term {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.glossary-meaning {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.45;
 }
 
 .output-actions { display: flex; gap: 8px; }

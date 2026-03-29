@@ -1,56 +1,125 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  getVernacularArticles,
+  translateVernacularArticle,
+  translateVernacularText,
+} from "../services/api";
 import "./VernacularPage.css";
 
 const LANGUAGES = [
-  { code: "hi", label: "हिंदी", name: "Hindi", flag: "🇮🇳" },
-  { code: "ta", label: "தமிழ்", name: "Tamil", flag: "🟠" },
-  { code: "te", label: "తెలుగు", name: "Telugu", flag: "🟡" },
-  { code: "bn", label: "বাংলা", name: "Bengali", flag: "🟢" },
+  { code: "hi", label: "Hindi", native: "हिंदी", name: "Hindi" },
+  { code: "ta", label: "Tamil", native: "தமிழ்", name: "Tamil" },
+  { code: "te", label: "Telugu", native: "తెలుగు", name: "Telugu" },
+  { code: "bn", label: "Bengali", native: "বাংলা", name: "Bengali" },
 ];
 
-const SAMPLE_TEXTS = [
-  "The Reserve Bank of India has held the repo rate steady at 6.5%, marking the sixth consecutive pause. Governor Das cited resilient GDP growth of 8.4% while flagging global uncertainty from US tariff escalations.",
-  "Sebi has tightened F&O rules — weekly expiry contracts will be limited to one per exchange, and lot sizes will be hiked to curb speculative retail trading.",
-  "India's startup ecosystem raised $2.1 billion in Q1 2026, with fintech and deeptech leading the charge. Bengaluru retained its position as the top startup hub.",
-];
-
-const MOCK_TRANSLATIONS = {
-  hi: {
-    text: "भारतीय रिज़र्व बैंक ने रेपो दर को 6.5% पर स्थिर रखा है, जो लगातार छठी बार है। गवर्नर दास ने भारत की मजबूत जीडीपी वृद्धि 8.4% का हवाला देते हुए अमेरिकी टैरिफ वृद्धि से वैश्विक अनिश्चितता की ओर ध्यान आकर्षित किया।\n\n📌 सरल भाषा में: इसका मतलब है कि आपके होम लोन की EMI फिलहाल नहीं बदलेगी। RBI ने यह फैसला इसलिए लिया क्योंकि भारत की अर्थव्यवस्था अच्छी चल रही है, लेकिन दुनिया में अनिश्चितता बनी हुई है।",
-    adapted: true,
-    note: "Includes EMI context for Hindi-speaking audience (most are home loan holders)",
-  },
-  ta: {
-    text: "இந்திய ரிசர்வ் வங்கி ரெப்போ வட்டி விகிதத்தை 6.5% ஆக தொடர்ந்து ஆறாவது முறையாக மாற்றாமல் வைத்துள்ளது. ஆளுநர் தாஸ் 8.4% GDP வளர்ச்சியை மேற்கோள் காட்டி, அமெரிக்க வரி விகித உயர்வால் உலக நிச்சயமற்ற தன்மை குறித்து எச்சரித்தார்.\n\n📌 எளிய விளக்கம்: உங்கள் வீட்டு கடன் EMI மாறாது. இந்திய பொருளாதாரம் நல்ல நிலையில் இருப்பதால் RBI இந்த முடிவை எடுத்தது.",
-    adapted: true,
-    note: "Adapted with local EMI relevance for Tamil-speaking middle-class readers",
-  },
-  te: {
-    text: "భారతీయ రిజర్వ్ బ్యాంక్ రెపో రేటును 6.5% వద్ద స్థిరంగా ఉంచింది — వరుసగా ఆరవ సారి. గవర్నర్ దాస్ 8.4% GDP వృద్ధిని ప్రస్తావిస్తూ, అమెరికా టారిఫ్ పెరుగుదల వల్ల ప్రపంచ అనిశ్చితత గురించి హెచ్చరించారు.\n\n📌 సులభ వివరణ: మీ హోమ్ లోన్ EMI ఇప్పటికి మారదు. భారత ఆర్థిక వ్యవస్థ బలంగా ఉన్నందున RBI ఈ నిర్ణయం తీసుకుంది.",
-    adapted: true,
-    note: "Localized with Andhra/Telangana farmer credit context removed (urban audience focus)",
-  },
-  bn: {
-    text: "ভারতীয় রিজার্ভ ব্যাংক রেপো রেট ৬.৫% এ অপরিবর্তিত রেখেছে — পরপর ষষ্ঠবার। গভর্নর দাস ৮.৪% জিডিপি প্রবৃদ্ধির কথা উল্লেখ করে মার্কিন শুল্ক বৃদ্ধির কারণে বৈশ্বিক অনিশ্চয়তার কথা তুলে ধরেছেন।\n\n📌 সহজ ব্যাখ্যা: আপনার হোম লোনের EMI আপাতত পরিবর্তন হবে না। ভারতের অর্থনীতি শক্তিশালী থাকায় RBI এই সিদ্ধান্ত নিয়েছে।",
-    adapted: true,
-    note: "Simplified for Bengali readers — includes jute/garment industry micro-context",
-  },
-};
+const SAMPLE_TEXT = "India's startup ecosystem raised $2.1 billion in Q1 2026, with fintech and deeptech leading the charge. Bengaluru retained its position as the top startup hub.";
 
 export default function VernacularPage() {
+  const [mode, setMode] = useState("article");
   const [inputText, setInputText] = useState("");
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
+  const [audienceHint, setAudienceHint] = useState("working professionals and retail investors");
+  const [articles, setArticles] = useState([]);
+  const [selectedArticleId, setSelectedArticleId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [articlesLoading, setArticlesLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
-  const translate = () => {
-    if (!inputText.trim()) return;
+  useEffect(() => {
+    const loadArticles = async () => {
+      setArticlesLoading(true);
+      try {
+        const { data } = await getVernacularArticles(12);
+        const items = data?.articles || [];
+        setArticles(items);
+        if (items.length) {
+          setSelectedArticleId(String(items[0].id));
+        }
+      } catch (err) {
+        setError(err?.response?.data?.error || "Could not load ET articles.");
+      } finally {
+        setArticlesLoading(false);
+      }
+    };
+
+    loadArticles();
+  }, []);
+
+  const selectedArticle = useMemo(
+    () => articles.find(a => String(a.id) === String(selectedArticleId)) || null,
+    [articles, selectedArticleId]
+  );
+
+  const translate = async () => {
+    setError("");
+
+    if (mode === "text" && !inputText.trim()) {
+      setError("Please enter source English text.");
+      return;
+    }
+
+    if (mode === "article" && !selectedArticleId) {
+      setError("Please select an article.");
+      return;
+    }
+
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
-      setResult(MOCK_TRANSLATIONS[selectedLang.code]);
+
+    try {
+      if (mode === "article") {
+        const { data } = await translateVernacularArticle(
+          Number(selectedArticleId),
+          selectedLang.code,
+          audienceHint
+        );
+        setResult({ ...(data?.translation || {}), article: data?.article || null });
+      } else {
+        const { data } = await translateVernacularText(
+          inputText,
+          selectedLang.code,
+          audienceHint
+        );
+        setResult({ ...data, article: null });
+      }
+    } catch (err) {
+      setError(err?.response?.data?.error || "Translation failed. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1800);
+    }
+  };
+
+  const onCopy = async () => {
+    if (!result?.translated_text) return;
+    try {
+      await navigator.clipboard.writeText(result.translated_text);
+    } catch (e) {
+      setError("Could not copy text in this browser session.");
+    }
+  };
+
+  const onListen = () => {
+    if (!result?.translated_text || !window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(result.translated_text);
+    const map = { hi: "hi-IN", ta: "ta-IN", te: "te-IN", bn: "bn-IN" };
+    utterance.lang = map[selectedLang.code] || "hi-IN";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const onShare = async () => {
+    if (!result?.translated_text) return;
+    if (navigator.share) {
+      await navigator.share({
+        title: result.headline_local || "ET Vernacular Brief",
+        text: result.translated_text,
+      });
+      return;
+    }
+    await onCopy();
+    setError("Copied to clipboard. Share manually from your app.");
   };
 
   return (
@@ -71,46 +140,88 @@ export default function VernacularPage() {
               className={`lang-btn ${selectedLang.code === lang.code ? "active" : ""}`}
               onClick={() => { setSelectedLang(lang); setResult(null); }}
             >
-              <span className="lang-flag">{lang.flag}</span>
               <div>
-                <div className="lang-native">{lang.label}</div>
-                <div className="lang-name">{lang.name}</div>
+                <div className="lang-native">{lang.native}</div>
+                <div className="lang-name">{lang.label}</div>
               </div>
             </button>
           ))}
         </div>
 
+        <div className="mode-selector">
+          <button className={`mode-btn ${mode === "article" ? "active" : ""}`} onClick={() => { setMode("article"); setResult(null); }}>
+            Translate ET article
+          </button>
+          <button className={`mode-btn ${mode === "text" ? "active" : ""}`} onClick={() => { setMode("text"); setResult(null); }}>
+            Translate custom text
+          </button>
+        </div>
+
         <div className="vernacular-layout">
           <div className="vernacular-input-panel">
-            <h3 className="vern-label">English article / text</h3>
-            <div className="sample-texts">
-              {SAMPLE_TEXTS.map((t, i) => (
-                <button key={i} className="sample-text-btn" onClick={() => setInputText(t)}>
-                  Sample {i + 1} →
-                </button>
-              ))}
-            </div>
-            <textarea
-              rows={8}
-              value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              placeholder="Paste ET article text here to translate..."
-              style={{ resize: "vertical", marginBottom: 16 }}
+            <h3 className="vern-label">English source</h3>
+
+            {mode === "article" && (
+              <>
+                <div className="input-meta">Pick from ET article feed</div>
+                <select
+                  className="article-select"
+                  value={selectedArticleId}
+                  onChange={e => { setSelectedArticleId(e.target.value); setResult(null); }}
+                  disabled={articlesLoading}
+                >
+                  {(articles || []).map(a => (
+                    <option key={a.id} value={a.id}>{a.title}</option>
+                  ))}
+                </select>
+                {selectedArticle && (
+                  <div className="article-preview">
+                    <div className="preview-title">{selectedArticle.title}</div>
+                    <div className="preview-meta">{selectedArticle.category} · {selectedArticle.source || "ET Bureau"}</div>
+                    <p>{selectedArticle.summary}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {mode === "text" && (
+              <>
+                <div className="sample-texts">
+                  <button className="sample-text-btn" onClick={() => setInputText(SAMPLE_TEXT)}>Use sample text</button>
+                </div>
+                <textarea
+                  rows={8}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  placeholder="Paste ET English business text here..."
+                  style={{ resize: "vertical", marginBottom: 16 }}
+                />
+              </>
+            )}
+
+            <label className="vern-input-label">Audience lens</label>
+            <input
+              className="vern-input"
+              value={audienceHint}
+              onChange={e => setAudienceHint(e.target.value)}
+              placeholder="Example: first-time investors in Tier-2 cities"
             />
+
             <button className="btn-primary" style={{ width: "100%" }} onClick={translate} disabled={loading}>
               {loading ? <><span className="spinner" /> Translating with context...</> : `Translate to ${selectedLang.name} →`}
             </button>
+            {error && <p className="vern-error">{error}</p>}
           </div>
 
           <div className="vernacular-output-panel">
             <h3 className="vern-label">
-              {selectedLang.label} output
-              {result?.adapted && <span className="adapted-badge">Culturally adapted</span>}
+              {selectedLang.native} output
+              {result?.translated_text && <span className="adapted-badge">Culturally adapted</span>}
             </h3>
 
             {!result && !loading && (
               <div className="output-placeholder">
-                <span style={{ fontSize: 32 }}>{selectedLang.flag}</span>
+                <span style={{ fontSize: 32 }}>{selectedLang.native.slice(0, 1)}</span>
                 <p>Translation will appear here</p>
                 <span>Not just translated — culturally adapted for {selectedLang.name}-speaking readers</span>
               </div>
@@ -125,19 +236,56 @@ export default function VernacularPage() {
 
             {result && (
               <div className="output-content">
+                <div className="local-headline">{result.headline_local}</div>
                 <div className="translated-text" lang={selectedLang.code}>
-                  {result.text}
+                  {result.translated_text}
                 </div>
-                {result.note && (
+
+                {!!result.simple_explainer && (
                   <div className="adaptation-note">
-                    <span className="ai-badge" style={{ fontSize: 9 }}>Adaptation note</span>
-                    <p>{result.note}</p>
+                    <span className="ai-badge" style={{ fontSize: 9 }}>Simple explainer</span>
+                    <p>{result.simple_explainer}</p>
                   </div>
                 )}
+
+                {!!(result.local_context || []).length && (
+                  <div className="adaptation-note">
+                    <span className="ai-badge" style={{ fontSize: 9 }}>Local context</span>
+                    <ul className="local-context-list">
+                      {(result.local_context || []).map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!!(result.business_glossary || []).length && (
+                  <div className="glossary-block">
+                    <div className="glossary-title">Business Glossary</div>
+                    <div className="glossary-grid">
+                      {(result.business_glossary || []).map((g, idx) => (
+                        <div className="glossary-item" key={idx}>
+                          <div className="glossary-term">{g.term_en} → {g.term_local}</div>
+                          <div className="glossary-meaning">{g.meaning}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!!(result.adaptation_notes || []).length && (
+                  <div className="adaptation-note">
+                    <span className="ai-badge" style={{ fontSize: 9 }}>Adaptation note</span>
+                    <ul className="local-context-list">
+                      {(result.adaptation_notes || []).map((n, idx) => <li key={idx}>{n}</li>)}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="output-actions">
-                  <button className="btn-outline" style={{ fontSize: 12 }}>📋 Copy</button>
-                  <button className="btn-outline" style={{ fontSize: 12 }}>🔊 Listen</button>
-                  <button className="btn-outline" style={{ fontSize: 12 }}>📤 Share</button>
+                  <button className="btn-outline" style={{ fontSize: 12 }} onClick={onCopy}>Copy</button>
+                  <button className="btn-outline" style={{ fontSize: 12 }} onClick={onListen}>Listen</button>
+                  <button className="btn-outline" style={{ fontSize: 12 }} onClick={onShare}>Share</button>
                 </div>
               </div>
             )}
