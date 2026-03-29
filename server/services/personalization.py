@@ -4,6 +4,11 @@ from database.models import get_db
 DECAY = 0.92
 
 
+def _user_key(user_id):
+    # Compare user IDs as text to support both legacy text columns and numeric IDs.
+    return str(user_id)
+
+
 def track_article_visit(user_id, article_id):
     conn = get_db()
     try:
@@ -60,9 +65,10 @@ def track_article_visit(user_id, article_id):
 def get_user_tag_weights(user_id):
     conn = get_db()
     try:
+        user_key = _user_key(user_id)
         rows = conn.execute(
-            "SELECT tag, weight FROM user_tag_weights WHERE user_id = ? ORDER BY weight DESC",
-            (user_id,)
+            "SELECT tag, weight FROM user_tag_weights WHERE CAST(user_id AS TEXT) = ? ORDER BY weight DESC",
+            (user_key,)
         ).fetchall()
         return {r["tag"]: float(r["weight"]) for r in rows if r["tag"]}
     except Exception as e:
@@ -75,12 +81,13 @@ def get_user_tag_weights(user_id):
 def get_personalized_feed(user_id, limit=10):
     conn = get_db()
     try:
+        user_key = _user_key(user_id)
         weights = get_user_tag_weights(user_id)
         category_weights = _get_user_category_weights(conn, user_id)
 
         visited = set()
         for r in conn.execute(
-            "SELECT article_id FROM user_article_history WHERE user_id = ?", (user_id,)
+            "SELECT article_id FROM user_article_history WHERE CAST(user_id AS TEXT) = ?", (user_key,)
         ).fetchall():
             try:
                 visited.add(int(r["article_id"]))
@@ -145,13 +152,14 @@ def get_personalized_feed(user_id, limit=10):
 def decay_all_weights(user_id):
     conn = get_db()
     try:
+        user_key = _user_key(user_id)
         conn.execute(
-            "UPDATE user_tag_weights SET weight = weight * ? WHERE user_id = ?",
-            (DECAY, user_id)
+            "UPDATE user_tag_weights SET weight = weight * ? WHERE CAST(user_id AS TEXT) = ?",
+            (DECAY, user_key)
         )
         conn.execute(
-            "DELETE FROM user_tag_weights WHERE user_id = ? AND weight < 0.1",
-            (user_id,)
+            "DELETE FROM user_tag_weights WHERE CAST(user_id AS TEXT) = ? AND weight < 0.1",
+            (user_key,)
         )
         conn.commit()
     except Exception as e:
@@ -204,13 +212,14 @@ def _to_relevance(score):
 
 
 def _get_user_category_weights(conn, user_id):
+    user_key = _user_key(user_id)
     rows = conn.execute(
         """SELECT a.category, COUNT(*) as c
            FROM user_article_history h
            JOIN articles a ON a.id = h.article_id
-           WHERE h.user_id = ?
+           WHERE CAST(h.user_id AS TEXT) = ?
            GROUP BY a.category""",
-        (user_id,),
+        (user_key,),
     ).fetchall()
 
     weights = {}
@@ -244,12 +253,13 @@ def _build_reason(matched_tags, category, tag_score, category_score, freshness_b
 def get_user_profile_summary(user_id):
     conn = get_db()
     try:
+        user_key = _user_key(user_id)
         tag_weights = get_user_tag_weights(user_id)
         category_weights = _get_user_category_weights(conn, user_id)
 
         total_reads_row = conn.execute(
-            "SELECT COUNT(*) as c FROM user_article_history WHERE user_id = ?",
-            (user_id,),
+            "SELECT COUNT(*) as c FROM user_article_history WHERE CAST(user_id AS TEXT) = ?",
+            (user_key,),
         ).fetchone()
         total_reads = int(total_reads_row["c"] or 0)
 

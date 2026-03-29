@@ -16,3 +16,6 @@ moviepy
 Pillow
 numpy
 psycopg2-binary
+PyJWT==2.8.1
+bcrypt==4.1.2
+Flask-JWT-Extended==4.5.3

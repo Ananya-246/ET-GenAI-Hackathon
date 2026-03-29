@@ -1,5 +1,6 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+from routes.auth import auth_bp
 from routes.my_et import my_et_bp
 from routes.video import video_bp
 from routes.navigator import navigator_bp
@@ -12,6 +13,10 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000"]}})
 
+# Register auth routes (public - no auth required)
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
+# Register feature routes (auth required)
 app.register_blueprint(my_et_bp, url_prefix="/api/my-et")
 app.register_blueprint(video_bp, url_prefix="/api/video")
 app.register_blueprint(navigator_bp, url_prefix="/api/navigator")

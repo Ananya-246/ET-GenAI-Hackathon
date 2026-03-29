@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
+from functools import wraps
 import json
 import traceback
+import jwt
+import os
 from services.personalization import (
     track_article_visit,
     get_personalized_feed,
@@ -11,13 +14,44 @@ from services.personalization import (
 from database.models import get_db
 
 my_et_bp = Blueprint("my_et", __name__)
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
+
+
+def token_required(f):
+    """Decorator to verify JWT token."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if "Authorization" in request.headers:
+            auth_header = request.headers["Authorization"]
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({"error": "Invalid authorization header"}), 401
+        
+        if not token:
+            return jsonify({"error": "Authorization token required"}), 401
+        
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            request.user_id = payload.get("user_id")
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+        
+        return f(*args, **kwargs)
+    
+    return decorated
 
 
 @my_et_bp.route("/feed", methods=["GET"])
+@token_required
 def feed():
     try:
-        user_id = request.args.get("user_id", "guest")
-        limit   = int(request.args.get("limit", 10))
+        limit = int(request.args.get("limit", 10))
+        user_id = request.user_id
 
         articles = get_personalized_feed(user_id, limit)
         weights  = get_user_tag_weights(user_id)
@@ -36,11 +70,12 @@ def feed():
 
 
 @my_et_bp.route("/visit", methods=["POST"])
+@token_required
 def visit():
     try:
         data       = request.get_json(silent=True) or {}
-        user_id    = data.get("user_id", "guest")
         article_id = data.get("article_id")
+        user_id = request.user_id
 
         if article_id is None:
             return jsonify({"error": "article_id required"}), 400
@@ -59,9 +94,11 @@ def visit():
         return jsonify({"error": str(e), "status": "failed", "top_tags": []}), 500
 
 
-@my_et_bp.route("/profile/<user_id>", methods=["GET"])
-def get_profile(user_id):
+@my_et_bp.route("/profile", methods=["GET"])
+@token_required
+def get_profile():
     try:
+        user_id = request.user_id
         weights  = get_user_tag_weights(user_id)
         top_tags = sorted(weights.items(), key=lambda x: x[1], reverse=True)
 
@@ -70,9 +107,9 @@ def get_profile(user_id):
             """SELECT a.title, a.category, h.visited_at
                FROM user_article_history h
                JOIN articles a ON a.id = h.article_id
-               WHERE h.user_id = ?
+               WHERE CAST(h.user_id AS TEXT) = ?
                ORDER BY h.visited_at DESC LIMIT 10""",
-            (user_id,)
+            (str(user_id),)
         ).fetchall()
         conn.close()
 
@@ -94,12 +131,13 @@ def get_profile(user_id):
 
 
 @my_et_bp.route("/persona", methods=["POST"])
+@token_required
 def set_persona():
     try:
         data    = request.get_json(silent=True) or {}
-        user_id = data.get("user_id", "guest")
         persona = data.get("persona", "")
         tags    = data.get("tags", [])
+        user_id = request.user_id
 
         if not isinstance(tags, list):
             tags = []
@@ -136,6 +174,7 @@ def set_persona():
 
 
 @my_et_bp.route("/article/<int:article_id>", methods=["GET"])
+@token_required
 def article_detail(article_id):
     try:
         article = get_article_detail(article_id)

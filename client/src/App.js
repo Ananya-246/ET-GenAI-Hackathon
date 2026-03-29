@@ -1,31 +1,110 @@
-import { useState } from "react";
-import Navbar from "./components/Navbar";
-import HomePage from "./pages/HomePage";
-import MyETPage from "./pages/MyETPage";
-import NavigatorPage from "./pages/NavigatorPage";
-import VideoStudioPage from "./pages/VideoStudioPage";
-import VernacularPage from "./pages/VernacularPage";
-import StoryArcPage from "./pages/StoryArcPage";
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import MyETPage from './pages/MyETPage';
+import NavigatorPage from './pages/NavigatorPage';
+import VideoStudioPage from './pages/VideoStudioPage';
+import VernacularPage from './pages/VernacularPage';
+import StoryArcPage from './pages/StoryArcPage';
+import './App.css';
 
 export default function App() {
-  const [activePage, setActivePage] = useState("home");
-
-  const renderPage = () => {
-    switch (activePage) {
-      case "my-et": return <MyETPage />;
-      case "navigator": return <NavigatorPage />;
-      case "video": return <VideoStudioPage />;
-      case "vernacular": return <VernacularPage />;
-      case "story-arc": return <StoryArcPage />;
-      default: return <HomePage setActivePage={setActivePage} />;
-    }
-  };
-
   return (
-    <div className="app">
-      <Navbar activePage={activePage} setActivePage={setActivePage} />
-      <main>{renderPage()}</main>
-    </div>
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <HomePage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-et"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <MyETPage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/navigator"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <NavigatorPage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/video"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <VideoStudioPage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vernacular"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <VernacularPage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/story-arc"
+            element={
+              <ProtectedRoute>
+                <div className="app">
+                  <Navbar />
+                  <main>
+                    <StoryArcPage />
+                  </main>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 }

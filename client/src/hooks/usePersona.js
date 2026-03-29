@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { getFeed, trackVisit, setPersona, getMyETArticle } from '../services/api';
 
-const USER_ID = 'guest';
-
 export default function usePersona() {
+  const { user, isAuthenticated } = useAuth();
   const [persona,   setPersonaState] = useState(null);
   const [feed,      setFeed]         = useState([]);
   const [topTags,   setTopTags]      = useState([]);
@@ -18,10 +18,15 @@ export default function usePersona() {
   });
 
   const loadFeed = useCallback(async () => {
+    if (!isAuthenticated) {
+      setError('Please log in to see your personalized feed');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const res      = await getFeed(USER_ID, 10);
+      const res      = await getFeed(10);
       const articles = Array.isArray(res?.data?.articles) ? res.data.articles : [];
       const tags     = Array.isArray(res?.data?.top_tags) ? res.data.top_tags : [];
       const summary  = res?.data?.profile_summary || null;
@@ -41,14 +46,14 @@ export default function usePersona() {
         setHasVisits(true);
       }
     } catch (err) {
-      console.error('[loadFeed]', err);
-      setError('Could not load feed. Is the backend running on port 5000?');
+      console.error('[loadFeed]', err?.response?.data || err.message);
+      setError('Could not load feed. ' + (err?.response?.data?.error || 'Is the backend running on port 5000?'));
       setFeed([]);
       setTopTags([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadFeed();
@@ -56,40 +61,52 @@ export default function usePersona() {
 
   const selectPersona = useCallback(async (p) => {
     if (!p || !p.id) return;
+    if (!isAuthenticated) {
+      setError('Please log in to update your persona');
+      return;
+    }
+
     setPersonaState(p);
     setError(null);
     try {
-      await setPersona(USER_ID, p.id, Array.isArray(p.tags) ? p.tags : []);
+      await setPersona(p.id, Array.isArray(p.tags) ? p.tags : []);
       await loadFeed();
     } catch (err) {
-      console.error('[selectPersona]', err);
+      console.error('[selectPersona]', err?.response?.data || err.message);
       setError('Could not save persona. Check backend.');
     }
-  }, [loadFeed]);
+  }, [isAuthenticated, loadFeed]);
 
   const onArticleClick = useCallback(async (article) => {
     if (!article || !article.id) return;
+    if (!isAuthenticated) {
+      setError('Please log in to track your reads');
+      return;
+    }
+
     try {
-      const res  = await trackVisit(USER_ID, article.id);
+      const res  = await trackVisit(article.id);
       const tags = Array.isArray(res?.data?.top_tags) ? res.data.top_tags : [];
       setTopTags(tags);
       if (tags.length > 0) setHasVisits(true);
       await loadFeed();
     } catch (err) {
-      console.error('[onArticleClick]', err);
+      console.error('[onArticleClick]', err?.response?.data || err.message);
     }
-  }, [loadFeed]);
+  }, [isAuthenticated, loadFeed]);
 
   const loadArticleDetail = useCallback(async (articleId) => {
     if (!articleId) return null;
+    if (!isAuthenticated) return null;
+
     try {
       const res = await getMyETArticle(articleId);
       return res?.data?.article || null;
     } catch (err) {
-      console.error('[loadArticleDetail]', err);
+      console.error('[loadArticleDetail]', err?.response?.data || err.message);
       return null;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   return {
     persona, feed, topTags, profileSummary, loading, error, hasVisits,

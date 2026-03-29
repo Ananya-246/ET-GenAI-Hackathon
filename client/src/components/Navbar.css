@@ -77,6 +77,19 @@
   align-items: center;
 }
 
+.user-menu {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--et-dark);
+  font-weight: 600;
+}
+
 .navbar-sections-bar {
   background: var(--et-red);
 }

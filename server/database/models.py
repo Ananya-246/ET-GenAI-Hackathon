@@ -14,20 +14,34 @@ def _is_postgres_url(path):
 
 
 class _DBResult:
-    def __init__(self, cursor):
+    def __init__(self, cursor, connection=None, is_postgres=False):
         self._cursor = cursor
+        self._connection = connection
+        self._is_postgres = is_postgres
 
     def fetchone(self):
-        return self._cursor.fetchone()
+        result = self._cursor.fetchone()
+        # For Postgres cursors, convert to dict-like object if needed
+        if result and self._is_postgres and hasattr(result, 'items'):
+            return result  # Already a dict from RealDictCursor
+        return result
 
     def fetchall(self):
         return self._cursor.fetchall()
+
+    def close(self):
+        if self._cursor:
+            try:
+                self._cursor.close()
+            except Exception:
+                pass
 
 
 class DBConnection:
     def __init__(self, raw_conn, is_postgres=False):
         self._conn = raw_conn
         self._is_postgres = is_postgres
+        self._cursors = []
 
     def _convert_query(self, query):
         if not self._is_postgres:
@@ -38,16 +52,18 @@ class DBConnection:
         converted = self._convert_query(query)
         if self._is_postgres:
             cur = self._conn.cursor(cursor_factory=RealDictCursor)
+            self._cursors.append(cur)
             cur.execute(converted, params)
-            return _DBResult(cur)
+            return _DBResult(cur, connection=self._conn, is_postgres=True)
 
         cur = self._conn.execute(converted, params)
-        return _DBResult(cur)
+        return _DBResult(cur, is_postgres=False)
 
     def executemany(self, query, seq_of_params):
         converted = self._convert_query(query)
         if self._is_postgres:
             cur = self._conn.cursor()
+            self._cursors.append(cur)
             cur.executemany(converted, seq_of_params)
             return
         self._conn.executemany(converted, seq_of_params)
@@ -56,6 +72,13 @@ class DBConnection:
         self._conn.commit()
 
     def close(self):
+        # Close all cursors for Postgres
+        for cur in self._cursors:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        self._cursors = []
         self._conn.close()
 
 
@@ -82,9 +105,19 @@ def init_db():
     if is_postgres:
         statements = [
             """
+            CREATE TABLE IF NOT EXISTS users (
+                id             BIGSERIAL PRIMARY KEY,
+                email          VARCHAR(255) UNIQUE NOT NULL,
+                password       TEXT NOT NULL,
+                display_name   VARCHAR(255),
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
             CREATE TABLE IF NOT EXISTS user_profile (
                 id         BIGSERIAL PRIMARY KEY,
-                user_id    TEXT UNIQUE NOT NULL,
+                user_id    BIGINT REFERENCES users(id) ON DELETE CASCADE,
                 persona    TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -92,7 +125,7 @@ def init_db():
             """
             CREATE TABLE IF NOT EXISTS user_tag_weights (
                 id         BIGSERIAL PRIMARY KEY,
-                user_id    TEXT NOT NULL,
+                user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 tag        TEXT NOT NULL,
                 weight     REAL DEFAULT 1.0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -113,7 +146,7 @@ def init_db():
             """
             CREATE TABLE IF NOT EXISTS user_article_history (
                 id         BIGSERIAL PRIMARY KEY,
-                user_id    TEXT NOT NULL,
+                user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 article_id BIGINT NOT NULL,
                 visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -132,21 +165,33 @@ def init_db():
     else:
         statements = [
             """
+            CREATE TABLE IF NOT EXISTS users (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                email          VARCHAR(255) UNIQUE NOT NULL,
+                password       TEXT NOT NULL,
+                display_name   VARCHAR(255),
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
             CREATE TABLE IF NOT EXISTS user_profile (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id    TEXT UNIQUE NOT NULL,
+                user_id    INTEGER UNIQUE NOT NULL,
                 persona    TEXT DEFAULT '',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
             """
             CREATE TABLE IF NOT EXISTS user_tag_weights (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id    TEXT NOT NULL,
+                user_id    INTEGER NOT NULL,
                 tag        TEXT NOT NULL,
                 weight     REAL DEFAULT 1.0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, tag)
+                UNIQUE(user_id, tag),
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
             """
@@ -163,9 +208,10 @@ def init_db():
             """
             CREATE TABLE IF NOT EXISTS user_article_history (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id    TEXT NOT NULL,
+                user_id    INTEGER NOT NULL,
                 article_id INTEGER NOT NULL,
-                visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )
             """,
             """
