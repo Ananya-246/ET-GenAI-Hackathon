@@ -4,12 +4,13 @@ A full-stack AI application that transforms how users engage with Economic Times
 
 ## 🎯 Project Overview
 
-ET GenAI is a hackathon project built on cutting-edge LLM technology and modern web frameworks to deliver four core AI-powered features:
+ET GenAI is a hackathon project built on cutting-edge LLM technology and modern web frameworks to deliver five core AI-powered features:
 
 1. **News Navigator** — Real-time grounded Q&A on ET articles with source verification
 2. **Vernacular Engine** — Culturally-adapted translations for 4 Indian languages (Hindi, Tamil, Telugu, Bengali)
 3. **MyET Personalization** — Adaptive feed ranking with multi-signal scoring and article detail modals
 4. **Story Arc Tracker** — Interactive narrative visualization of ongoing business stories with timeline, players, sentiment, and predictions
+5. **AI News Video Studio** — Automatically transforms ET articles or breaking news into broadcast-quality 60–120 second videos with AI narration, animated data visuals, and contextual overlays
 
 ---
 
@@ -43,6 +44,13 @@ ET GenAI is a hackathon project built on cutting-edge LLM technology and modern 
 - **Watch-Next Predictions**: AI predicts upcoming story developments
 - **Tech Stack**: Groq LLM narrative generation, React timeline/player visualization components
 
+### 5. AI News Video Studio
+- **Auto Video Generation**: Convert any ET article into a short 60-120 second news video automatically
+- **AI Narration**: Generates voice-over script and synthesized narration for anchor-like delivery
+- **Animated Data Visuals**: Adds motion graphics and visual storytelling for key business metrics
+- **Contextual Overlays**: Injects key facts, highlights, and labels to improve watchability and comprehension
+- **Tech Stack**: Flask video routes, script generation, TTS pipeline, media rendering services
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -50,7 +58,7 @@ ET GenAI is a hackathon project built on cutting-edge LLM technology and modern 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │            React Frontend (Client)                      │
-│  Navigator | Vernacular | MyET | Story Arc Pages       │
+│  Navigator | Vernacular | MyET | Story Arc | Video Pages│
 └────────────────┬────────────────────────────────────────┘
                  │ Axios API Layer
                  │
@@ -67,6 +75,7 @@ ET GenAI is a hackathon project built on cutting-edge LLM technology and modern 
 │  │  - Briefing synthesis                           │    │
 │  │  - Cultural adaptation & translation            │    │
 │  │  - Narrative arc generation                     │    │
+│  │  - Video script + narration generation          │    │
 │  └─────────────────────────────────────────────────┘    │
 └────────────────┬────────────────────────────────────────┘
                  │
