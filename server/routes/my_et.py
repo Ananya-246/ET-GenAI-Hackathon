@@ -106,7 +106,12 @@ def set_persona():
 
         conn = get_db()
         conn.execute(
-            "INSERT OR REPLACE INTO user_profile (user_id, persona) VALUES (?,?)",
+            """
+            INSERT INTO user_profile (user_id, persona)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                persona = EXCLUDED.persona
+            """,
             (user_id, persona)
         )
         for tag in tags:
@@ -116,7 +121,10 @@ def set_persona():
                 INSERT INTO user_tag_weights (user_id, tag, weight)
                 VALUES (?, ?, 2.0)
                 ON CONFLICT(user_id, tag) DO UPDATE SET
-                    weight = MAX(weight, 2.0)
+                    weight = CASE
+                        WHEN user_tag_weights.weight >= 2.0 THEN user_tag_weights.weight
+                        ELSE 2.0
+                    END
             """, (user_id, tag.strip()))
         conn.commit()
         conn.close()

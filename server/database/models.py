@@ -1,71 +1,196 @@
-import sqlite3
-import os
 import json
+import os
+import sqlite3
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", "database/db.sqlite3")
 
 
+def _is_postgres_url(path):
+    value = (path or "").lower()
+    return value.startswith("postgres://") or value.startswith("postgresql://")
+
+
+class _DBResult:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+
+class DBConnection:
+    def __init__(self, raw_conn, is_postgres=False):
+        self._conn = raw_conn
+        self._is_postgres = is_postgres
+
+    def _convert_query(self, query):
+        if not self._is_postgres:
+            return query
+        return query.replace("?", "%s")
+
+    def execute(self, query, params=()):
+        converted = self._convert_query(query)
+        if self._is_postgres:
+            cur = self._conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute(converted, params)
+            return _DBResult(cur)
+
+        cur = self._conn.execute(converted, params)
+        return _DBResult(cur)
+
+    def executemany(self, query, seq_of_params):
+        converted = self._convert_query(query)
+        if self._is_postgres:
+            cur = self._conn.cursor()
+            cur.executemany(converted, seq_of_params)
+            return
+        self._conn.executemany(converted, seq_of_params)
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
 def get_db():
-    os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+    if _is_postgres_url(DATABASE_PATH):
+        conn = psycopg2.connect(DATABASE_PATH, sslmode=os.getenv("DB_SSLMODE", "require"))
+        return DBConnection(conn, is_postgres=True)
+
+    dir_path = os.path.dirname(DATABASE_PATH)
+    if dir_path:
+        os.makedirs(dir_path, exist_ok=True)
+
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
-    return conn
+    return DBConnection(conn, is_postgres=False)
 
 
 def init_db():
     conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS user_profile (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id    TEXT UNIQUE NOT NULL,
-            persona    TEXT DEFAULT '',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+    is_postgres = _is_postgres_url(DATABASE_PATH)
 
-        CREATE TABLE IF NOT EXISTS user_tag_weights (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id    TEXT NOT NULL,
-            tag        TEXT NOT NULL,
-            weight     REAL DEFAULT 1.0,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, tag)
-        );
+    if is_postgres:
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS user_profile (
+                id         BIGSERIAL PRIMARY KEY,
+                user_id    TEXT UNIQUE NOT NULL,
+                persona    TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user_tag_weights (
+                id         BIGSERIAL PRIMARY KEY,
+                user_id    TEXT NOT NULL,
+                tag        TEXT NOT NULL,
+                weight     REAL DEFAULT 1.0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, tag)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS articles (
+                id           BIGSERIAL PRIMARY KEY,
+                title        TEXT NOT NULL,
+                category     TEXT DEFAULT 'General',
+                summary      TEXT DEFAULT '',
+                source       TEXT DEFAULT 'ET Bureau',
+                tags         TEXT DEFAULT '[]',
+                published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user_article_history (
+                id         BIGSERIAL PRIMARY KEY,
+                user_id    TEXT NOT NULL,
+                article_id BIGINT NOT NULL,
+                visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS video_scripts (
+                id           BIGSERIAL PRIMARY KEY,
+                article_text TEXT,
+                style        TEXT,
+                voice        TEXT,
+                script       TEXT,
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+        ]
+    else:
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS user_profile (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    TEXT UNIQUE NOT NULL,
+                persona    TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user_tag_weights (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    TEXT NOT NULL,
+                tag        TEXT NOT NULL,
+                weight     REAL DEFAULT 1.0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, tag)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS articles (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                title        TEXT NOT NULL,
+                category     TEXT DEFAULT 'General',
+                summary      TEXT DEFAULT '',
+                source       TEXT DEFAULT 'ET Bureau',
+                tags         TEXT DEFAULT '[]',
+                published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user_article_history (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    TEXT NOT NULL,
+                article_id INTEGER NOT NULL,
+                visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS video_scripts (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                article_text TEXT,
+                style        TEXT,
+                voice        TEXT,
+                script       TEXT,
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+        ]
 
-        CREATE TABLE IF NOT EXISTS articles (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            title        TEXT NOT NULL,
-            category     TEXT DEFAULT 'General',
-            summary      TEXT DEFAULT '',
-            source       TEXT DEFAULT 'ET Bureau',
-            tags         TEXT DEFAULT '[]',
-            published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+    for stmt in statements:
+        conn.execute(stmt)
 
-        CREATE TABLE IF NOT EXISTS user_article_history (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id    TEXT NOT NULL,
-            article_id INTEGER NOT NULL,
-            visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS video_scripts (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            article_text TEXT,
-            style        TEXT,
-            voice        TEXT,
-            script       TEXT,
-            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
     conn.commit()
     _seed_articles(conn)
     conn.close()
 
 
 def _seed_articles(conn):
-    count = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+    count_row = conn.execute("SELECT COUNT(*) as c FROM articles").fetchone()
+    count = int((count_row.get("c") if isinstance(count_row, dict) else count_row[0]) or 0)
     if count > 0:
         return
 

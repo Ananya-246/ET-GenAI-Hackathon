@@ -27,7 +27,8 @@ def track_article_visit(user_id, article_id):
             return
 
         conn.execute(
-            "INSERT OR IGNORE INTO user_profile (user_id) VALUES (?)", (user_id,)
+            "INSERT INTO user_profile (user_id) VALUES (?) ON CONFLICT(user_id) DO NOTHING",
+            (user_id,),
         )
 
         for tag in tags:
@@ -37,9 +38,12 @@ def track_article_visit(user_id, article_id):
                 INSERT INTO user_tag_weights (user_id, tag, weight, updated_at)
                 VALUES (?, ?, 1.0, CURRENT_TIMESTAMP)
                 ON CONFLICT(user_id, tag) DO UPDATE SET
-                    weight = MIN(weight * ? + 1.0, 20.0),
+                    weight = CASE
+                        WHEN user_tag_weights.weight * ? + 1.0 > 20.0 THEN 20.0
+                        ELSE user_tag_weights.weight * ? + 1.0
+                    END,
                     updated_at = CURRENT_TIMESTAMP
-            """, (user_id, tag.strip(), DECAY))
+            """, (user_id, tag.strip(), DECAY, DECAY))
 
         conn.execute(
             "INSERT INTO user_article_history (user_id, article_id) VALUES (?, ?)",
