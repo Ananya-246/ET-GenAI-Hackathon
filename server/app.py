@@ -11,7 +11,7 @@ import os
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000"]}})
+CORS(app, resources={r"/api/*": {"origins": ["https://bucolic-sfogliatella-4ee12c.netlify.app/", "http://localhost:3000"]}})
 
 # Register auth routes (public - no auth required)
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
