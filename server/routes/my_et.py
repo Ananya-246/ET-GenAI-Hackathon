@@ -5,6 +5,8 @@ from services.personalization import (
     track_article_visit,
     get_personalized_feed,
     get_user_tag_weights,
+    get_user_profile_summary,
+    get_article_detail,
 )
 from database.models import get_db
 
@@ -20,10 +22,12 @@ def feed():
         articles = get_personalized_feed(user_id, limit)
         weights  = get_user_tag_weights(user_id)
         top_tags = sorted(weights.items(), key=lambda x: x[1], reverse=True)[:8]
+        profile_summary = get_user_profile_summary(user_id)
 
         return jsonify({
             "articles": articles,
             "top_tags": [{"tag": t, "weight": round(float(w), 2)} for t, w in top_tags],
+            "profile_summary": profile_summary,
             "total":    len(articles),
         }), 200
     except Exception as e:
@@ -118,6 +122,18 @@ def set_persona():
         conn.close()
 
         return jsonify({"status": "saved"}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@my_et_bp.route("/article/<int:article_id>", methods=["GET"])
+def article_detail(article_id):
+    try:
+        article = get_article_detail(article_id)
+        if not article:
+            return jsonify({"error": "article not found"}), 404
+        return jsonify({"article": article}), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

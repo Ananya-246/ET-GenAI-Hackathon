@@ -28,6 +28,9 @@ export const getProfile = (userId = 'guest') =>
 export const setPersona = (userId = 'guest', persona, tags = []) =>
   api.post('/api/my-et/persona', { user_id: userId, persona, tags });
 
+export const getMyETArticle = (articleId) =>
+  api.get(`/api/my-et/article/${encodeURIComponent(articleId)}`);
+
 export const generateVideoScript = (articleText, style, voice) =>
   api.post('/api/video/generate', { article_text: articleText, style, voice });
 

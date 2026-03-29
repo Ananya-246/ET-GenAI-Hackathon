@@ -25,16 +25,26 @@ function safePercent(score) {
 
 export default function MyETPage() {
   const {
-    persona, feed, topTags, loading, error, hasVisits,
-    selectPersona, onArticleClick,
+    persona, feed, topTags, profileSummary, loading, error, hasVisits,
+    selectPersona, onArticleClick, loadArticleDetail,
   } = usePersona();
 
   const [expanded, setExpanded] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [articleLoading, setArticleLoading] = useState(false);
 
-  const handleArticleClick = (article) => {
+  const handleArticleClick = async (article) => {
     if (!article) return;
     onArticleClick(article);
     setExpanded(prev => prev === article.id ? null : article.id);
+    setArticleLoading(true);
+    const detail = await loadArticleDetail(article.id);
+    setSelectedArticle(detail || article);
+    setArticleLoading(false);
+  };
+
+  const closeArticle = () => {
+    setSelectedArticle(null);
   };
 
   const safeFeed    = Array.isArray(feed)    ? feed    : [];
@@ -101,6 +111,28 @@ export default function MyETPage() {
             </div>
           </div>
         )}
+
+        <div className="profile-summary-grid">
+          <div className="profile-summary-card">
+            <div className="summary-label">Personalization Level</div>
+            <div className="summary-value">{profileSummary?.profile_level || 'Starter'}</div>
+          </div>
+          <div className="profile-summary-card">
+            <div className="summary-label">Tracked Reads</div>
+            <div className="summary-value">{Number(profileSummary?.total_reads || 0)}</div>
+          </div>
+          <div className="profile-summary-card wide">
+            <div className="summary-label">Top Category Affinity</div>
+            <div className="summary-pills">
+              {(profileSummary?.top_categories || []).slice(0, 3).map((c) => (
+                <span key={c.category} className="summary-pill">{c.category}</span>
+              ))}
+              {(profileSummary?.top_categories || []).length === 0 && (
+                <span className="summary-pill muted">No category preference yet</span>
+              )}
+            </div>
+          </div>
+        </div>
 
         {error && (
           <div style={{
@@ -177,6 +209,9 @@ export default function MyETPage() {
                           {article.summary && (
                             <p className="feed-item-summary">{article.summary}</p>
                           )}
+                          {article.reason && (
+                            <p className="feed-item-reason">Why for you: {article.reason}</p>
+                          )}
                           {allTags.length > 0 && (
                             <div className="all-tags-row">
                               {allTags.map(t => (
@@ -196,6 +231,32 @@ export default function MyETPage() {
         </div>
 
       </div>
+
+      {selectedArticle && (
+        <div className="article-modal-backdrop" onClick={closeArticle}>
+          <div className="article-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="article-modal-close" onClick={closeArticle}>x</button>
+            {articleLoading ? (
+              <div className="article-modal-loading">Opening article...</div>
+            ) : (
+              <>
+                <div className="article-modal-top">
+                  <span className="tag">{selectedArticle.category || 'General'}</span>
+                  <span className="article-time">{selectedArticle.time || 'Recently'}</span>
+                </div>
+                <h2 className="article-modal-title">{selectedArticle.title || 'Untitled'}</h2>
+                <div className="article-modal-meta">{selectedArticle.source || 'ET Bureau'}</div>
+                <p className="article-modal-summary">{selectedArticle.summary || 'No summary available.'}</p>
+                <div className="all-tags-row">
+                  {(selectedArticle.tags || []).map(t => (
+                    <span key={t} className="all-tag">#{t}</span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
