@@ -5,6 +5,7 @@ import MyETPage from "./pages/MyETPage";
 import NavigatorPage from "./pages/NavigatorPage";
 import VideoStudioPage from "./pages/VideoStudioPage";
 import VernacularPage from "./pages/VernacularPage";
+import StoryArcPage from "./pages/StoryArcPage";
 import "./App.css";
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
       case "navigator": return <NavigatorPage />;
       case "video": return <VideoStudioPage />;
       case "vernacular": return <VernacularPage />;
+      case "story-arc": return <StoryArcPage />;
       default: return <HomePage setActivePage={setActivePage} />;
     }
   };

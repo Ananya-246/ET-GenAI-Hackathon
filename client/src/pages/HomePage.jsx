@@ -21,6 +21,7 @@ const MOCK_ARTICLES = [
 const AI_FEATURES = [
   { key: 'my-et',      icon: '🧠', title: 'My ET',          desc: 'Personalized newsroom curated for your interests.',          color: '#0f3460' },
   { key: 'navigator',  icon: '🔍', title: 'News Navigator',  desc: 'Ask questions across all ET coverage. One briefing.',        color: '#16213e' },
+  { key: 'story-arc',  icon: '📈', title: 'Story Arc Tracker', desc: 'Interactive timeline, key players, sentiment, predictions.', color: '#1b4332' },
   { key: 'video',      icon: '🎬', title: 'AI Video Studio', desc: 'Any article → broadcast-quality 60-second anchor video.',    color: '#1a1a2e' },
   { key: 'vernacular', icon: '🌐', title: 'Vernacular',      desc: 'Business news in Hindi, Tamil, Telugu & Bengali.',           color: '#0d1b2a' },
 ];

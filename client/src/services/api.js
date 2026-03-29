@@ -67,4 +67,13 @@ export const translateVernacularArticle = (articleId, languageCode, audienceHint
     audience_hint: audienceHint,
   });
 
+export const getStoryArcCandidates = (limit = 12) =>
+  api.get(`/api/story-arc/candidates?limit=${limit}`);
+
+export const generateStoryArc = (topic, maxSources = 10) =>
+  api.post('/api/story-arc/generate', {
+    topic,
+    max_sources: maxSources,
+  });
+
 export default api;

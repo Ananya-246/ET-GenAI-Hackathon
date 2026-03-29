@@ -4,6 +4,7 @@ from routes.my_et import my_et_bp
 from routes.video import video_bp
 from routes.navigator import navigator_bp
 from routes.vernacular import vernacular_bp
+from routes.story_arc import story_arc_bp
 from database.models import init_db
 import os
 
@@ -15,6 +16,7 @@ app.register_blueprint(my_et_bp, url_prefix="/api/my-et")
 app.register_blueprint(video_bp, url_prefix="/api/video")
 app.register_blueprint(navigator_bp, url_prefix="/api/navigator")
 app.register_blueprint(vernacular_bp, url_prefix="/api/vernacular")
+app.register_blueprint(story_arc_bp, url_prefix="/api/story-arc")
 
 
 @app.route("/static/audio/<path:filename>")

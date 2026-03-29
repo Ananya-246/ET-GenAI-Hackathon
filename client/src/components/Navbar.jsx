@@ -79,6 +79,12 @@ export default function Navbar({ activePage, setActivePage }) {
             >
               🌐 Vernacular
             </button>
+            <button
+              className={`ai-strip-btn ${activePage === "story-arc" ? "active" : ""}`}
+              onClick={() => setActivePage("story-arc")}
+            >
+              📈 Story Arc
+            </button>
           </div>
         </div>
       </div>
