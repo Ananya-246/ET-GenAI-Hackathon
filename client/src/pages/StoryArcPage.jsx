@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { generateStoryArc, getStoryArcCandidates } from "../services/api";
+import useAISettings from "../hooks/useAISettings";
 import "./StoryArcPage.css";
 
 const DEFAULT_TOPICS = [
@@ -23,6 +24,7 @@ function sentimentClass(sentiment) {
 }
 
 export default function StoryArcPage() {
+  const { settings, setSetting } = useAISettings();
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,14 +35,14 @@ export default function StoryArcPage() {
   useEffect(() => {
     const loadCandidates = async () => {
       try {
-        const { data } = await getStoryArcCandidates(10);
+        const { data } = await getStoryArcCandidates(settings.storyArcMaxSources || 10);
         setCandidates(Array.isArray(data?.candidates) ? data.candidates : []);
       } catch (e) {
         setCandidates([]);
       }
     };
     loadCandidates();
-  }, []);
+  }, [settings.storyArcMaxSources]);
 
   const timeline = useMemo(() => (arc?.timeline || []), [arc]);
   const activeTimeline = timeline[activeTimelineIdx] || null;
@@ -56,7 +58,7 @@ export default function StoryArcPage() {
     setActiveTimelineIdx(0);
 
     try {
-      const { data } = await generateStoryArc(chosen, 10);
+      const { data } = await generateStoryArc(chosen, settings.storyArcMaxSources || 10);
       setArc(data);
     } catch (err) {
       setError(err?.response?.data?.error || "Could not generate story arc.");
@@ -88,6 +90,18 @@ export default function StoryArcPage() {
             <button className="btn-primary" onClick={() => buildArc()} disabled={loading}>
               {loading ? <><span className="spinner" /> Building Arc...</> : "Build Story Arc"}
             </button>
+          </div>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+            <label style={{ fontSize: 12, color: "var(--et-muted)", minWidth: 170 }}>Narrative breadth (sources)</label>
+            <input
+              type="range"
+              min={5}
+              max={15}
+              value={settings.storyArcMaxSources || 10}
+              onChange={(e) => setSetting("storyArcMaxSources", Number(e.target.value))}
+              style={{ flex: 1 }}
+            />
+            <span style={{ width: 28, fontSize: 12, fontWeight: 700 }}>{settings.storyArcMaxSources || 10}</span>
           </div>
 
           <div className="story-chip-row">

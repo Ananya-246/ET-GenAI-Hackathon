@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import useAISettings from './useAISettings';
 import { getFeed, trackVisit, setPersona, getMyETArticle } from '../services/api';
 
 export default function usePersona() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { settings } = useAISettings();
   const [persona,   setPersonaState] = useState(null);
   const [feed,      setFeed]         = useState([]);
   const [topTags,   setTopTags]      = useState([]);
@@ -26,7 +28,7 @@ export default function usePersona() {
     setLoading(true);
     setError(null);
     try {
-      const res      = await getFeed(10);
+      const res      = await getFeed(settings.myEtFeedLimit || 10);
       const articles = Array.isArray(res?.data?.articles) ? res.data.articles : [];
       const tags     = Array.isArray(res?.data?.top_tags) ? res.data.top_tags : [];
       const summary  = res?.data?.profile_summary || null;
@@ -53,7 +55,7 @@ export default function usePersona() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, settings.myEtFeedLimit]);
 
   useEffect(() => {
     loadFeed();

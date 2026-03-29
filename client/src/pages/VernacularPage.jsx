@@ -4,6 +4,7 @@ import {
   translateVernacularArticle,
   translateVernacularText,
 } from "../services/api";
+import useAISettings from "../hooks/useAISettings";
 import "./VernacularPage.css";
 
 const LANGUAGES = [
@@ -16,10 +17,11 @@ const LANGUAGES = [
 const SAMPLE_TEXT = "India's startup ecosystem raised $2.1 billion in Q1 2026, with fintech and deeptech leading the charge. Bengaluru retained its position as the top startup hub.";
 
 export default function VernacularPage() {
+  const { settings, setSetting } = useAISettings();
   const [mode, setMode] = useState("article");
   const [inputText, setInputText] = useState("");
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
-  const [audienceHint, setAudienceHint] = useState("working professionals and retail investors");
+  const [audienceHint, setAudienceHint] = useState(settings.vernacularAudienceHint || "working professionals and retail investors");
   const [articles, setArticles] = useState([]);
   const [selectedArticleId, setSelectedArticleId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export default function VernacularPage() {
     const loadArticles = async () => {
       setArticlesLoading(true);
       try {
-        const { data } = await getVernacularArticles(12);
+        const { data } = await getVernacularArticles(settings.vernacularArticleLimit || 12);
         const items = data?.articles || [];
         setArticles(items);
         if (items.length) {
@@ -45,7 +47,11 @@ export default function VernacularPage() {
     };
 
     loadArticles();
-  }, []);
+  }, [settings.vernacularArticleLimit]);
+
+  useEffect(() => {
+    setAudienceHint(settings.vernacularAudienceHint || "working professionals and retail investors");
+  }, [settings.vernacularAudienceHint]);
 
   const selectedArticle = useMemo(
     () => articles.find(a => String(a.id) === String(selectedArticleId)) || null,
@@ -206,6 +212,15 @@ export default function VernacularPage() {
               onChange={e => setAudienceHint(e.target.value)}
               placeholder="Example: first-time investors in Tier-2 cities"
             />
+            <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+              <button
+                className="btn-outline"
+                style={{ fontSize: 12 }}
+                onClick={() => setSetting("vernacularAudienceHint", audienceHint)}
+              >
+                Save as default audience
+              </button>
+            </div>
 
             <button className="btn-primary" style={{ width: "100%" }} onClick={translate} disabled={loading}>
               {loading ? <><span className="spinner" /> Translating with context...</> : `Translate to ${selectedLang.name} →`}

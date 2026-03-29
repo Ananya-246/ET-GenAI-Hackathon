@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { askNavigatorQuestion, generateNavigatorBriefing } from "../services/api";
+import useAISettings from "../hooks/useAISettings";
 import "./NavigatorPage.css";
 
 const PRESET_TOPICS = [
@@ -8,6 +9,7 @@ const PRESET_TOPICS = [
 ];
 
 export default function NavigatorPage() {
+  const { settings, setSetting } = useAISettings();
   const [topic, setTopic] = useState("");
   const [briefingReady, setBriefingReady] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function NavigatorPage() {
     setMessages([]);
 
     try {
-      const { data } = await generateNavigatorBriefing(chosen, "guest", 8);
+      const { data } = await generateNavigatorBriefing(chosen, settings.navigatorMaxSources || 8);
       setBriefing(data);
       setBriefingId(data?.briefing_id || "");
       setBriefingReady(true);
@@ -109,6 +111,18 @@ export default function NavigatorPage() {
             <button className="btn-primary" onClick={() => loadBriefing()} disabled={loading}>
               {loading ? <><span className="spinner" /> Synthesizing...</> : "Get Briefing →"}
             </button>
+          </div>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+            <label style={{ fontSize: 12, color: "var(--et-muted)", minWidth: 150 }}>Coverage depth (sources)</label>
+            <input
+              type="range"
+              min={3}
+              max={12}
+              value={settings.navigatorMaxSources || 8}
+              onChange={(e) => setSetting("navigatorMaxSources", Number(e.target.value))}
+              style={{ flex: 1 }}
+            />
+            <span style={{ width: 28, fontSize: 12, fontWeight: 700 }}>{settings.navigatorMaxSources || 8}</span>
           </div>
           {briefingError && <p className="navigator-error">{briefingError}</p>}
         </div>

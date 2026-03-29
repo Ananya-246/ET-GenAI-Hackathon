@@ -121,6 +121,53 @@
 
 .plugin-card:hover .plugin-arrow { color: var(--et-red); }
 
+.ai-settings-card {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+}
+
+.ai-settings-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ai-settings-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-setting-item span {
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ai-setting-item select {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(12,17,33,0.8);
+  color: #fff;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .ai-settings-grid { grid-template-columns: 1fr; }
+}
+
 .home-grid-wrapper { padding: 24px 20px; }
 
 .home-main-grid {

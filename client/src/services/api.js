@@ -78,10 +78,9 @@ export const generateVideoScript = (articleText, style, voice) =>
 export const generateTTS = (scriptText, voice) =>
   api.post('/api/video/tts', { script_text: scriptText, voice });
 
-export const generateNavigatorBriefing = (topic, userId = 'guest', maxSources = 8) =>
+export const generateNavigatorBriefing = (topic, maxSources = 8) =>
   api.post('/api/navigator/briefing', {
     topic,
-    user_id: userId,
     max_sources: maxSources,
   });
 

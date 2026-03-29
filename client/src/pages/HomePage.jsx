@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAISettings from '../hooks/useAISettings';
 import ArticleCard from '../components/ArticleCard';
 import './HomePage.css';
 
@@ -26,7 +28,19 @@ const AI_FEATURES = [
   { key: 'vernacular', icon: '🌐', title: 'Vernacular',      desc: 'Business news in Hindi, Tamil, Telugu & Bengali.',           color: '#0d1b2a' },
 ];
 
-export default function HomePage({ setActivePage }) {
+export default function HomePage() {
+  const navigate = useNavigate();
+  const { settings, setSetting, resetSettings } = useAISettings();
+
+  const routeForFeature = (key) => {
+    if (key === 'my-et') return '/my-et';
+    if (key === 'navigator') return '/navigator';
+    if (key === 'story-arc') return '/story-arc';
+    if (key === 'video') return '/video';
+    if (key === 'vernacular') return '/vernacular';
+    return '/';
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {}, 3000);
     return () => clearInterval(interval);
@@ -57,7 +71,7 @@ export default function HomePage({ setActivePage }) {
                 key={f.key}
                 className="plugin-card"
                 style={{ background: f.color }}
-                onClick={() => setActivePage && setActivePage(f.key)}
+                onClick={() => navigate(routeForFeature(f.key))}
               >
                 <span className="plugin-icon">{f.icon}</span>
                 <div>
@@ -67,6 +81,70 @@ export default function HomePage({ setActivePage }) {
                 <span className="plugin-arrow">→</span>
               </button>
             ))}
+          </div>
+
+          <div className="ai-settings-card">
+            <div className="ai-settings-top">
+              <div>
+                <div className="plugin-card-title">AI Control Center</div>
+                <div className="plugin-card-desc">Tune depth, personalization intensity, and vernacular defaults for a truly differentiated newsroom.</div>
+              </div>
+              <button className="btn-outline" style={{ fontSize: 12 }} onClick={resetSettings}>Reset</button>
+            </div>
+
+            <div className="ai-settings-grid">
+              <label className="ai-setting-item">
+                <span>My ET feed size</span>
+                <select
+                  value={settings.myEtFeedLimit}
+                  onChange={(e) => setSetting('myEtFeedLimit', Number(e.target.value))}
+                >
+                  <option value={8}>8 stories</option>
+                  <option value={10}>10 stories</option>
+                  <option value={15}>15 stories</option>
+                  <option value={20}>20 stories</option>
+                </select>
+              </label>
+
+              <label className="ai-setting-item">
+                <span>Navigator source depth</span>
+                <select
+                  value={settings.navigatorMaxSources}
+                  onChange={(e) => setSetting('navigatorMaxSources', Number(e.target.value))}
+                >
+                  <option value={6}>6 sources</option>
+                  <option value={8}>8 sources</option>
+                  <option value={10}>10 sources</option>
+                  <option value={12}>12 sources</option>
+                </select>
+              </label>
+
+              <label className="ai-setting-item">
+                <span>Story Arc narrative breadth</span>
+                <select
+                  value={settings.storyArcMaxSources}
+                  onChange={(e) => setSetting('storyArcMaxSources', Number(e.target.value))}
+                >
+                  <option value={8}>8 sources</option>
+                  <option value={10}>10 sources</option>
+                  <option value={12}>12 sources</option>
+                  <option value={15}>15 sources</option>
+                </select>
+              </label>
+
+              <label className="ai-setting-item">
+                <span>Vernacular feed window</span>
+                <select
+                  value={settings.vernacularArticleLimit}
+                  onChange={(e) => setSetting('vernacularArticleLimit', Number(e.target.value))}
+                >
+                  <option value={8}>8 articles</option>
+                  <option value={12}>12 articles</option>
+                  <option value={20}>20 articles</option>
+                  <option value={30}>30 articles</option>
+                </select>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -122,7 +200,7 @@ export default function HomePage({ setActivePage }) {
               <button
                 className="btn-primary"
                 style={{ width: '100%', marginTop: 10 }}
-                onClick={() => setActivePage && setActivePage('navigator')}
+                onClick={() => navigate('/navigator')}
               >
                 Open News Navigator →
               </button>
