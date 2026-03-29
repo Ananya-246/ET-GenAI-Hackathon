@@ -146,7 +146,7 @@ export default function VideoStudioPage() {
                   {showScript ? '▲ Hide Script' : '▼ View Generated Script'}
                 </button>
                 {showScript && (
-                  <pre className="script-display">{result.script}</pre>
+                  <pre className="script-display">{result?.script || ""}</pre>
                 )}
               </div>
             )}
@@ -184,11 +184,11 @@ export default function VideoStudioPage() {
               <div className="video-output-wrap">
                 <div className="video-et-header">
                   <span className="et-badge">ET Intelligence</span>
-                  <span className="video-meta">{style} · {voice} · {result.duration}</span>
+                  <span className="video-meta">{style} · {voice} · {result?.duration || "60 seconds"}</span>
                 </div>
 
                 <video
-                  src={result.video_url}
+                  src={result?.video_url || ""}
                   controls
                   autoPlay
                   className="anchor-video"
@@ -213,7 +213,7 @@ export default function VideoStudioPage() {
 
                 <div className="video-download-bar">
                   <a
-                    href={result.video_url}
+                    href={result?.video_url || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary"
@@ -224,7 +224,7 @@ export default function VideoStudioPage() {
                   <button
                     className="btn-outline"
                     style={{ fontSize: 13 }}
-                    onClick={() => navigator.clipboard.writeText(result.video_url)}
+                    onClick={() => navigator.clipboard.writeText(result?.video_url || "")}
                   >
                     🔗 Copy Link
                   </button>

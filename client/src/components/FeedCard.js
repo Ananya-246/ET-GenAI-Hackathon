@@ -1,7 +1,13 @@
 import './FeedCard.css';
 
 export default function FeedCard({ article, rank }) {
-  const { title, category, time, relevance_score, reason } = article;
+  if (!article) return null;
+
+  const title           = article.title           || 'Untitled';
+  const category        = article.category        || 'General';
+  const time            = article.time            || 'Recently';
+  const relevance_score = article.relevance_score || 0;
+  const reason          = article.reason          || '';
 
   return (
     <div className="feed-card">
@@ -9,9 +15,9 @@ export default function FeedCard({ article, rank }) {
       <div className="feed-card-body">
         <div className="feed-card-top">
           <span className="tag">{category}</span>
-          {relevance_score && (
+          {relevance_score > 0 && (
             <span className="relevance-pill">
-              {Math.round(relevance_score * 100)}% match
+              {Math.min(Math.round(relevance_score * 100), 99)}% match
             </span>
           )}
         </div>

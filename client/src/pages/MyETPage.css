@@ -21,7 +21,6 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-.persona-section { }
 
 .persona-grid { display: flex; flex-wrap: wrap; gap: 10px; }
 
@@ -96,7 +95,6 @@
   text-align: right;
 }
 
-.feed-section { }
 
 .feed-header-row {
   display: flex;

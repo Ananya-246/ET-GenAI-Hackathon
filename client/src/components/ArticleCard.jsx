@@ -1,7 +1,14 @@
 import "./ArticleCard.css";
 
 export default function ArticleCard({ article, variant = "default", badge }) {
-  const { title, category, time, image, summary, source } = article;
+  if (!article) return null;
+
+  const title    = article.title    || "Untitled";
+  const category = article.category || "General";
+  const time     = article.time     || "Recently";
+  const image    = article.image    || null;
+  const summary  = article.summary  || "";
+  const source   = article.source   || "ET Bureau";
 
   if (variant === "hero") {
     return (
@@ -13,7 +20,7 @@ export default function ArticleCard({ article, variant = "default", badge }) {
           <h2 className="hero-title">{title}</h2>
           {summary && <p className="hero-summary">{summary}</p>}
           <div className="article-meta">
-            <span>{source || "ET Bureau"}</span>
+            <span>{source}</span>
             <span>·</span>
             <span>{time}</span>
           </div>

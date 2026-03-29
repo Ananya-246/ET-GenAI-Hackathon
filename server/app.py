@@ -6,18 +6,32 @@ from database.models import init_db
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000"]}})
 
 app.register_blueprint(my_et_bp, url_prefix="/api/my-et")
 app.register_blueprint(video_bp, url_prefix="/api/video")
 
-@app.route("/static/audio/<filename>")
+
+@app.route("/static/audio/<path:filename>")
 def serve_audio(filename):
     return send_from_directory("static/audio", filename)
+
+
+@app.route("/static/videos/<path:filename>")
+def serve_video(filename):
+    return send_from_directory("static/videos", filename)
+
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
 
 with app.app_context():
     init_db()
     os.makedirs("static/audio", exist_ok=True)
+    os.makedirs("static/videos", exist_ok=True)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
