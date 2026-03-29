@@ -1,62 +1,96 @@
 from flask import Blueprint, request, jsonify
 import json
-from services.llm_service import get_personalized_feed
+from services.personalization import (
+    track_article_visit,
+    get_personalized_feed,
+    get_user_tag_weights,
+    decay_all_weights,
+)
 from database.models import get_db
 
 my_et_bp = Blueprint("my_et", __name__)
 
 
-@my_et_bp.route("/feed", methods=["POST"])
+@my_et_bp.route("/feed", methods=["GET"])
 def feed():
-    data = request.get_json()
-    persona = data.get("persona")
-    interests = data.get("interests", [])
+    user_id = request.args.get("user_id", "guest")
+    limit   = int(request.args.get("limit", 10))
 
-    if not persona:
-        return jsonify({"error": "persona is required"}), 400
+    articles = get_personalized_feed(user_id, limit)
 
-    try:
-        raw = get_personalized_feed(persona, interests)
-        cleaned = raw.strip().strip("```json").strip("```").strip()
-        parsed = json.loads(cleaned)
-        return jsonify(parsed), 200
-    except json.JSONDecodeError:
-        return jsonify({"error": "AI returned invalid JSON", "raw": raw}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    weights = get_user_tag_weights(user_id)
+    top_tags = sorted(weights.items(), key=lambda x: x[1], reverse=True)[:8]
+
+    return jsonify({
+        "articles": articles,
+        "top_tags": [{"tag": t, "weight": round(w, 2)} for t, w in top_tags],
+        "total": len(articles),
+    }), 200
 
 
-@my_et_bp.route("/profile", methods=["POST"])
-def save_profile():
-    data = request.get_json()
-    user_id = data.get("user_id", "guest")
-    persona = data.get("persona")
-    interests = data.get("interests", [])
+@my_et_bp.route("/visit", methods=["POST"])
+def visit():
+    data       = request.get_json()
+    user_id    = data.get("user_id", "guest")
+    article_id = data.get("article_id")
 
-    conn = get_db()
-    conn.execute(
-        "INSERT OR REPLACE INTO user_profile (user_id, persona, interests) VALUES (?, ?, ?)",
-        (user_id, persona, json.dumps(interests))
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "saved"}), 200
+    if not article_id:
+        return jsonify({"error": "article_id required"}), 400
+
+    track_article_visit(user_id, article_id)
+
+    weights  = get_user_tag_weights(user_id)
+    top_tags = sorted(weights.items(), key=lambda x: x[1], reverse=True)[:8]
+
+    return jsonify({
+        "status": "tracked",
+        "top_tags": [{"tag": t, "weight": round(w, 2)} for t, w in top_tags],
+    }), 200
 
 
 @my_et_bp.route("/profile/<user_id>", methods=["GET"])
 def get_profile(user_id):
+    weights  = get_user_tag_weights(user_id)
+    top_tags = sorted(weights.items(), key=lambda x: x[1], reverse=True)
+
     conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM user_profile WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1",
+    history = conn.execute(
+        """SELECT a.title, a.category, h.visited_at
+           FROM user_article_history h
+           JOIN articles a ON a.id = h.article_id
+           WHERE h.user_id = ?
+           ORDER BY h.visited_at DESC LIMIT 10""",
         (user_id,)
-    ).fetchone()
+    ).fetchall()
     conn.close()
 
-    if not row:
-        return jsonify({"error": "Profile not found"}), 404
-
     return jsonify({
-        "user_id": row["user_id"],
-        "persona": row["persona"],
-        "interests": json.loads(row["interests"])
+        "user_id": user_id,
+        "top_tags": [{"tag": t, "weight": round(w, 2)} for t, w in top_tags],
+        "history": [{"title": r["title"], "category": r["category"], "visited_at": r["visited_at"]} for r in history],
     }), 200
+
+
+@my_et_bp.route("/persona", methods=["POST"])
+def set_persona():
+    data    = request.get_json()
+    user_id = data.get("user_id", "guest")
+    persona = data.get("persona", "")
+    tags    = data.get("tags", [])
+
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO user_profile (user_id, persona) VALUES (?,?)",
+        (user_id, persona)
+    )
+    for tag in tags:
+        conn.execute("""
+            INSERT INTO user_tag_weights (user_id, tag, weight)
+            VALUES (?, ?, 2.0)
+            ON CONFLICT(user_id, tag) DO UPDATE SET
+                weight = MAX(weight, 2.0)
+        """, (user_id, tag))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "saved"}), 200

@@ -89,7 +89,7 @@ export default function MyETPage() {
                 <h2 style={{ fontFamily: "'Playfair Display', serif" }}>Your Personalized Feed</h2>
                 <span className="ai-badge">AI curated</span>
               </div>
-              <p className="feed-sub">Tailored for {persona.label} · {feed.length} stories</p>
+              <p className="feed-sub">Tailored for {persona?.label} · {feed?.length} stories</p>
             </div>
             <div className="feed-list">
               {feed.map((a, i) => (

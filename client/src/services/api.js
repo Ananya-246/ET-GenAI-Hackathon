@@ -7,14 +7,17 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-export const getPersonalizedFeed = (persona, interests) =>
-  api.post('/api/my-et/feed', { persona, interests });
+export const getFeed         = (userId, limit = 10) =>
+  api.get(`/api/my-et/feed?user_id=${userId}&limit=${limit}`);
 
-export const saveProfile = (userId, persona, interests) =>
-  api.post('/api/my-et/profile', { user_id: userId, persona, interests });
+export const trackVisit      = (userId, articleId) =>
+  api.post('/api/my-et/visit', { user_id: userId, article_id: articleId });
 
-export const getProfile = (userId) =>
+export const getProfile      = (userId) =>
   api.get(`/api/my-et/profile/${userId}`);
+
+export const setPersona      = (userId, persona, tags) =>
+  api.post('/api/my-et/persona', { user_id: userId, persona, tags });
 
 export const generateVideoScript = (articleText, style, voice) =>
   api.post('/api/video/generate', { article_text: articleText, style, voice });
